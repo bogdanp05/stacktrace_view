@@ -106,13 +106,30 @@ def parse_stacktrace(stacktrace):
     for line in stacktrace:
         if line == '' or line == 'File' or line[0] == '<' or line == '# Thread_id':
             continue
-        # if line == '# Thread_id':
-        #     tuples_list.append(['', '', '', ''])
-        #     continue
+
         tuple_line = get_tuple_stack_element(line)
         if tuple_line is not None:
             tuples_list.append(tuple_line)
     return tuples_list
+
+
+def get_dict_line_count(all_stacks_tuples):
+    """
+    :param all_stacks_tuples: All the stacktraces of an endpoint, as a list of lists of tuples
+    :return dictionary where key is a tuple and value is the count
+    """
+    dict_line_count = {}
+    for stack in all_stacks_tuples:
+        for t in stack:
+            if t == ['', '', '', '']:
+                continue
+            fn_ln = t[0] + ":" + t[1]
+            dict_line_count[fn_ln] = dict_line_count.get(fn_ln, 0) + 1
+
+    for t in sorted(dict_line_count, key=dict_line_count.get, reverse=True):
+        print('%s : %d' % (t, dict_line_count[t]))
+
+    return dict_line_count
 
 
 def main():
@@ -143,11 +160,16 @@ def main():
                 for call in calls:
                     writeFile.write('%s\n' % call)
                 writeFile.write('\n\n')
+
+    all_stacks_tuples = []
     for stack in all_stacks:
         tuples_list = parse_stacktrace(stack)
+        all_stacks_tuples.append(tuples_list)
         for t in tuples_list:
             print(t)
         print('\n\n\n')
+
+    get_dict_line_count(all_stacks_tuples)
 
 
 if __name__ == "__main__":
